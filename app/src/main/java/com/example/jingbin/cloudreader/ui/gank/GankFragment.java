@@ -1,21 +1,20 @@
 package com.example.jingbin.cloudreader.ui.gank;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.example.jingbin.cloudreader.R;
-import com.example.jingbin.cloudreader.base.BaseFragment;
-import com.example.jingbin.cloudreader.databinding.FragmentGankBinding;
-import com.example.jingbin.cloudreader.http.rx.RxBus;
-import com.example.jingbin.cloudreader.http.rx.RxCodeConstants;
+import me.jingbin.bymvvm.base.BaseFragment;
+import com.example.jingbin.cloudreader.databinding.FragmentContentBinding;
+import me.jingbin.bymvvm.rxbus.RxBus;
+import com.example.jingbin.cloudreader.app.RxCodeConstants;
 import com.example.jingbin.cloudreader.ui.gank.child.AndroidFragment;
 import com.example.jingbin.cloudreader.ui.gank.child.CustomFragment;
-import com.example.jingbin.cloudreader.ui.gank.child.EverydayFragment;
+import com.example.jingbin.cloudreader.ui.gank.child.GankHomeFragment;
 import com.example.jingbin.cloudreader.ui.gank.child.WelfareFragment;
 import com.example.jingbin.cloudreader.view.MyFragmentPagerAdapter;
-import com.example.jingbin.cloudreader.viewmodel.menu.NoViewModel;
+import me.jingbin.bymvvm.base.NoViewModel;
 
 import java.util.ArrayList;
 
@@ -26,7 +25,7 @@ import io.reactivex.functions.Consumer;
  * Created by jingbin on 16/11/21.
  * 展示干货的页面
  */
-public class GankFragment extends BaseFragment<NoViewModel, FragmentGankBinding> {
+public class GankFragment extends BaseFragment<NoViewModel, FragmentContentBinding> {
 
     private ArrayList<String> mTitleList = new ArrayList<>(4);
     private ArrayList<Fragment> mFragments = new ArrayList<>(4);
@@ -37,7 +36,6 @@ public class GankFragment extends BaseFragment<NoViewModel, FragmentGankBinding>
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        showContentView();
         mIsPrepared = true;
     }
 
@@ -46,6 +44,7 @@ public class GankFragment extends BaseFragment<NoViewModel, FragmentGankBinding>
         if (!mIsPrepared || !mIsVisible || !mIsFirst) {
             return;
         }
+        showLoading();
         bindingView.vpGank.postDelayed(() -> {
             initFragmentList();
             MyFragmentPagerAdapter myAdapter = new MyFragmentPagerAdapter(getChildFragmentManager(), mFragments, mTitleList);
@@ -53,26 +52,26 @@ public class GankFragment extends BaseFragment<NoViewModel, FragmentGankBinding>
             myAdapter.notifyDataSetChanged();
             // 左右预加载页面的个数
             bindingView.vpGank.setOffscreenPageLimit(3);
-            bindingView.tabGank.setTabMode(TabLayout.MODE_FIXED);
             bindingView.tabGank.setupWithViewPager(bindingView.vpGank);
             // item点击跳转
             initRxBus();
+            showContentView();
             mIsFirst = false;
         }, 120);
     }
 
     @Override
     public int setContent() {
-        return R.layout.fragment_gank;
+        return R.layout.fragment_content;
     }
 
     private void initFragmentList() {
         mTitleList.clear();
-        mTitleList.add("每日推荐");
+        mTitleList.add("干货首页");
         mTitleList.add("福利");
-        mTitleList.add("干货订制");
+        mTitleList.add("订制");
         mTitleList.add("大安卓");
-        mFragments.add(new EverydayFragment());
+        mFragments.add(new GankHomeFragment());
         mFragments.add(new WelfareFragment());
         mFragments.add(new CustomFragment());
         mFragments.add(AndroidFragment.newInstance("Android"));

@@ -1,17 +1,17 @@
 package com.example.jingbin.cloudreader.viewmodel.movie;
 
-import android.annotation.SuppressLint;
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.support.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.annotation.NonNull;
 
+import me.jingbin.bymvvm.base.BaseViewModel;
 import com.example.jingbin.cloudreader.bean.HotMovieBean;
 import com.example.jingbin.cloudreader.data.model.OneRepository;
 import com.example.jingbin.cloudreader.http.HttpClient;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
@@ -20,7 +20,7 @@ import io.reactivex.schedulers.Schedulers;
  * @data 2018/12/22
  */
 
-public class OneViewModel extends AndroidViewModel {
+public class OneViewModel extends BaseViewModel {
 
     private MutableLiveData<HotMovieBean> hotMovieBean;
     private OneRepository oneRepo;
@@ -54,10 +54,9 @@ public class OneViewModel extends AndroidViewModel {
         return hotMovie;
     }
 
-    @SuppressLint("CheckResult")
     public MutableLiveData<HotMovieBean> getComingSoon() {
         final MutableLiveData<HotMovieBean> data = new MutableLiveData<>();
-        HttpClient.Builder.getDouBanService().getComingSoon(mStart, mCount)
+        Disposable subscribe = HttpClient.Builder.getDouBanService().getComingSoon(mStart, mCount)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<HotMovieBean>() {
@@ -71,6 +70,7 @@ public class OneViewModel extends AndroidViewModel {
                         data.setValue(null);
                     }
                 });
+        addDisposable(subscribe);
         return data;
     }
 

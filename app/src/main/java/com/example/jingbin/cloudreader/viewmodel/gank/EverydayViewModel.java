@@ -1,12 +1,12 @@
 package com.example.jingbin.cloudreader.viewmodel.gank;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.MutableLiveData;
-import android.support.annotation.NonNull;
+import androidx.lifecycle.MutableLiveData;
+import androidx.annotation.NonNull;
 
-import com.example.jingbin.cloudreader.app.CloudReaderApplication;
+import com.example.jingbin.cloudreader.app.App;
 import com.example.jingbin.cloudreader.app.Constants;
+import me.jingbin.bymvvm.base.BaseViewModel;
 import com.example.jingbin.cloudreader.bean.AndroidBean;
 import com.example.jingbin.cloudreader.bean.BannerItemBean;
 import com.example.jingbin.cloudreader.bean.FrontpageBean;
@@ -17,7 +17,6 @@ import com.example.jingbin.cloudreader.utils.SPUtils;
 import com.example.jingbin.cloudreader.utils.TimeUtil;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import io.reactivex.disposables.Disposable;
 
@@ -25,11 +24,11 @@ import io.reactivex.disposables.Disposable;
  * @author jingbin
  * @data 2017/12/15
  */
-public class EverydayViewModel extends AndroidViewModel {
+public class EverydayViewModel extends BaseViewModel {
 
     private EverydayModel mEverydayModel;
     private ACache maCache;
-    private ArrayList<List<AndroidBean>> mLists;
+    private ArrayList<ArrayList<AndroidBean>> mLists;
     private ArrayList<String> mBannerImages;
     private String year;
     private String month;
@@ -42,7 +41,7 @@ public class EverydayViewModel extends AndroidViewModel {
 
     private final MutableLiveData<Boolean> isShowLoading = new MutableLiveData<>();
     private final MutableLiveData<BannerDataBean> bannerData = new MutableLiveData<>();
-    private final MutableLiveData<ArrayList<List<AndroidBean>>> contentData = new MutableLiveData<>();
+    private final MutableLiveData<ArrayList<ArrayList<AndroidBean>>> contentData = new MutableLiveData<>();
 
     public MutableLiveData<Boolean> getShowLoading() {
         return isShowLoading;
@@ -52,13 +51,13 @@ public class EverydayViewModel extends AndroidViewModel {
         return bannerData;
     }
 
-    public MutableLiveData<ArrayList<List<AndroidBean>>> getContentData() {
+    public MutableLiveData<ArrayList<ArrayList<AndroidBean>>> getContentData() {
         return contentData;
     }
 
     public EverydayViewModel(@NonNull Application application) {
         super(application);
-        maCache = ACache.get(CloudReaderApplication.getInstance());
+        maCache = ACache.get(App.getInstance());
         mEverydayModel = new EverydayModel();
         year = getTodayTime().get(0);
         month = getTodayTime().get(1);
@@ -117,14 +116,14 @@ public class EverydayViewModel extends AndroidViewModel {
                 if (mLists != null) {
                     mLists.clear();
                 }
-                mLists = (ArrayList<List<AndroidBean>>) object;
+                mLists = (ArrayList<ArrayList<AndroidBean>>) object;
                 if (mLists.size() > 0 && mLists.get(0).size() > 0) {
                     maCache.remove(Constants.EVERYDAY_CONTENT);
                     maCache.put(Constants.EVERYDAY_CONTENT, mLists);
                     saveDate();
                     contentData.setValue(mLists);
                 } else {
-                    mLists = (ArrayList<List<AndroidBean>>) maCache.getAsObject(Constants.EVERYDAY_CONTENT);
+                    mLists = (ArrayList<ArrayList<AndroidBean>>) maCache.getAsObject(Constants.EVERYDAY_CONTENT);
                     if (mLists != null && mLists.size() > 0) {
                         saveDate();
                         contentData.setValue(mLists);
@@ -150,6 +149,7 @@ public class EverydayViewModel extends AndroidViewModel {
 
             @Override
             public void addSubscription(Disposable subscription) {
+                addDisposable(subscription);
             }
         });
     }
@@ -170,9 +170,7 @@ public class EverydayViewModel extends AndroidViewModel {
                             //获取所有图片
                             mBannerImages.add(result.get(i).getRandpic());
                         }
-                        maCache.remove(Constants.BANNER_PIC);
                         maCache.put(Constants.BANNER_PIC, mBannerImages);
-                        maCache.remove(Constants.BANNER_PIC_DATA);
                         maCache.put(Constants.BANNER_PIC_DATA, result);
                         bannerDataBean.setData(mBannerImages, result);
 
@@ -188,12 +186,13 @@ public class EverydayViewModel extends AndroidViewModel {
 
             @Override
             public void addSubscription(Disposable subscription) {
+                addDisposable(subscription);
             }
         });
     }
 
     private void handleNoData() {
-        mLists = (ArrayList<List<AndroidBean>>) maCache.getAsObject(Constants.EVERYDAY_CONTENT);
+        mLists = (ArrayList<ArrayList<AndroidBean>>) maCache.getAsObject(Constants.EVERYDAY_CONTENT);
         if (mLists != null && mLists.size() > 0) {
             saveDate();
             contentData.setValue(mLists);
@@ -219,7 +218,7 @@ public class EverydayViewModel extends AndroidViewModel {
         } else {
             showBannerPage();
         }
-        mLists = (ArrayList<List<AndroidBean>>) maCache.getAsObject(Constants.EVERYDAY_CONTENT);
+        mLists = (ArrayList<ArrayList<AndroidBean>>) maCache.getAsObject(Constants.EVERYDAY_CONTENT);
         if (mLists != null && mLists.size() > 0) {
             saveDate();
             contentData.setValue(mLists);
@@ -259,7 +258,9 @@ public class EverydayViewModel extends AndroidViewModel {
         return list;
     }
 
-    public void onDestroy() {
+    @Override
+    protected void onCleared() {
+        super.onCleared();
         isHaveData = false;
         mEverydayModel = null;
         if (mLists != null) {

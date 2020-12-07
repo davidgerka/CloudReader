@@ -11,16 +11,16 @@
 
     </data>
 
-    <android.support.design.widget.CoordinatorLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <android.support.design.widget.AppBarLayout
+        <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <android.support.design.widget.CollapsingToolbarLayout
+            <com.google.android.material.appbar.CollapsingToolbarLayout
                 android:id="@+id/collapsing"
                 android:layout_width="match_parent"
                 android:layout_height="190dp"
@@ -61,12 +61,12 @@
                     tools:text="共12个子分类" />
 
 
-                <android.support.v7.widget.Toolbar
+                <androidx.appcompat.widget.Toolbar
                     android:id="@+id/toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
-                    android:paddingEnd="?attr/actionBarSize"
                     android:paddingStart="0dp"
+                    android:paddingEnd="?attr/actionBarSize"
                     app:contentInsetEnd="?attr/actionBarSize"
                     app:contentInsetLeft="0dp"
                     app:contentInsetStart="0dp"
@@ -75,12 +75,14 @@
                     app:navigationIcon="@drawable/icon_back"
                     app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                     app:title="@{treeItemBean.name}"
-                    app:titleTextColor="@color/colorTabTextNormal" />
+                    app:titleMarginStart="0dp"
+                    app:titleTextColor="@color/colorTabTextNormal"
+                    tools:title="基础知识" />
 
 
-            </android.support.design.widget.CollapsingToolbarLayout>
+            </com.google.android.material.appbar.CollapsingToolbarLayout>
 
-            <android.support.design.widget.TabLayout
+            <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
@@ -92,15 +94,15 @@
                 app:tabSelectedTextColor="@color/colorTheme"
                 app:tabTextAppearance="@android:style/TextAppearance.Widget.TabWidget"
                 app:tabTextColor="@color/colorTabTextNormal" />
-        </android.support.design.widget.AppBarLayout>
+        </com.google.android.material.appbar.AppBarLayout>
 
-        <android.support.v4.view.ViewPager
+        <androidx.viewpager.widget.ViewPager
             android:id="@+id/viewPager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        </android.support.v4.view.ViewPager>
+        </androidx.viewpager.widget.ViewPager>
 
-    </android.support.design.widget.CoordinatorLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

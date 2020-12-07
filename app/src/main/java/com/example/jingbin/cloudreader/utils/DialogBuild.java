@@ -1,19 +1,24 @@
 package com.example.jingbin.cloudreader.utils;
 
+import android.content.Context;
 import android.content.DialogInterface;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.AppCompatEditText;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.AppCompatEditText;
+
 import com.example.jingbin.cloudreader.R;
+import com.example.jingbin.cloudreader.app.RxCodeConstants;
 import com.example.jingbin.cloudreader.data.UserUtil;
 import com.example.jingbin.cloudreader.data.model.LoginModel;
-import com.example.jingbin.cloudreader.data.room.Injection;
-import com.example.jingbin.cloudreader.data.room.User;
-import com.example.jingbin.cloudreader.data.room.UserDataCallback;
 import com.example.jingbin.cloudreader.view.OnLoginListener;
+
+import me.jingbin.bymvvm.room.Injection;
+import me.jingbin.bymvvm.room.User;
+import me.jingbin.bymvvm.room.UserDataCallback;
+import me.jingbin.bymvvm.rxbus.RxBus;
 
 
 /**
@@ -27,13 +32,28 @@ public class DialogBuild {
     /**
      * 显示自定义布局
      */
-    public static void showCustom(View v, String content, String buttonText,DialogInterface.OnClickListener clickListener) {
+    public static void showCustom(View v, String content, String buttonText, DialogInterface.OnClickListener clickListener) {
+        showCustom(v, 0, content, buttonText, null, clickListener);
+    }
+
+    /**
+     * @param status 0弹框点击消失，1弹框不可点击消失
+     */
+    public static void showCustom(View v, int status, String content, String positiveText, String negativeText, DialogInterface.OnClickListener clickListener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
         View view = View.inflate(v.getContext(), R.layout.title_douban_top, null);
         TextView titleTop = view.findViewById(R.id.title_top);
+        if (status == 1) {
+            builder.setCancelable(false);
+        } else {
+            builder.setCancelable(true);
+        }
         titleTop.setText(content);
         builder.setView(view);
-        builder.setPositiveButton(buttonText, clickListener);
+        builder.setPositiveButton(positiveText, clickListener);
+        if (!TextUtils.isEmpty(negativeText)) {
+            builder.setNegativeButton(negativeText, null);
+        }
         builder.show();
     }
 
@@ -42,6 +62,19 @@ public class DialogBuild {
         builder.setTitle("提示");
         builder.setMessage(message);
         builder.setPositiveButton(buttonText, clickListener);
+        builder.show();
+    }
+
+    public static void show(Context context, String message, String positiveText, String negativeText, DialogInterface.OnClickListener clickListener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        View view = View.inflate(context, R.layout.title_douban_top, null);
+        TextView titleTop = view.findViewById(R.id.title_top);
+        titleTop.setText(message);
+        builder.setView(view);
+        builder.setPositiveButton(positiveText, clickListener);
+        if (!TextUtils.isEmpty(negativeText)) {
+            builder.setNegativeButton(negativeText, null);
+        }
         builder.show();
     }
 
@@ -55,7 +88,6 @@ public class DialogBuild {
             switch (which) {
                 case 0:
                     BaseTools.copy(content);
-                    ToastUtil.showToast("复制成功");
                     break;
                 case 1:
                     ShareUtils.share(v.getContext(), content);
@@ -100,7 +132,8 @@ public class DialogBuild {
                         new LoginModel().logout(() -> {
                             Injection.get().deleteAllData();
                             UserUtil.handleLoginFailure();
-                            ToastUtil.showToastLong("退出成功");
+//                            ToastUtil.showToastLong("退出成功");
+                            RxBus.getDefault().post(RxCodeConstants.LOGIN, false);
                         });
                     } else {
                         listener.loginWanAndroid();

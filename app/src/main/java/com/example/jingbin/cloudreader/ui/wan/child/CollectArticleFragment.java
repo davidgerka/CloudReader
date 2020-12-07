@@ -1,21 +1,22 @@
 package com.example.jingbin.cloudreader.ui.wan.child;
 
-import android.arch.lifecycle.Observer;
+import androidx.lifecycle.Observer;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.widget.SwipeRefreshLayout;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.jingbin.cloudreader.R;
 import com.example.jingbin.cloudreader.adapter.WanAndroidAdapter;
-import com.example.jingbin.cloudreader.base.BaseFragment;
+import me.jingbin.bymvvm.base.BaseFragment;
 import com.example.jingbin.cloudreader.bean.wanandroid.HomeListBean;
 import com.example.jingbin.cloudreader.databinding.FragmentWanAndroidBinding;
 import com.example.jingbin.cloudreader.utils.CommonUtils;
 import com.example.jingbin.cloudreader.utils.RefreshHelper;
 import com.example.jingbin.cloudreader.viewmodel.wan.ArticleListViewModel;
-import com.example.xrecyclerview.XRecyclerView;
+
+import me.jingbin.library.ByRecyclerView;
 
 /**
  * @author jingbin
@@ -63,30 +64,24 @@ public class CollectArticleFragment extends BaseFragment<ArticleListViewModel, F
 
 
     private void initRefreshView() {
-        RefreshHelper.init(bindingView.xrvWan);
+        RefreshHelper.initLinear(bindingView.xrvWan, true);
+        RefreshHelper.setDefaultAnimator(bindingView.xrvWan).setLoadMoreEnabled(true);
         bindingView.srlWan.setColorSchemeColors(CommonUtils.getColor(R.color.colorTheme));
         mAdapter = new WanAndroidAdapter(activity);
         bindingView.xrvWan.setAdapter(mAdapter);
         bindingView.srlWan.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if (!bindingView.xrvWan.isLoadingData()) {
-                    bindingView.xrvWan.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            bindingView.xrvWan.reset();
-                            viewModel.setPage(0);
-                            getCollectList();
-                        }
-                    }, 150);
-                }
+                bindingView.xrvWan.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        viewModel.setPage(0);
+                        getCollectList();
+                    }
+                }, 150);
             }
         });
-        bindingView.xrvWan.setLoadingListener(new XRecyclerView.LoadingListener() {
-            @Override
-            public void onRefresh() {
-
-            }
+        bindingView.xrvWan.setOnLoadMoreListener(new ByRecyclerView.OnLoadMoreListener() {
 
             @Override
             public void onLoadMore() {
@@ -95,7 +90,7 @@ public class CollectArticleFragment extends BaseFragment<ArticleListViewModel, F
                     viewModel.setPage(++page);
                     getCollectList();
                 } else {
-                    bindingView.xrvWan.refreshComplete();
+                    bindingView.xrvWan.loadMoreComplete();
                 }
             }
         });
@@ -106,9 +101,9 @@ public class CollectArticleFragment extends BaseFragment<ArticleListViewModel, F
         if (!mIsPrepared || !mIsVisible || !mIsFirst) {
             return;
         }
-
         bindingView.srlWan.setRefreshing(true);
         bindingView.srlWan.postDelayed(this::getCollectList, 150);
+        mIsFirst = false;
     }
 
     private void getCollectList() {
@@ -118,27 +113,24 @@ public class CollectArticleFragment extends BaseFragment<ArticleListViewModel, F
                 if (bindingView.srlWan.isRefreshing()) {
                     bindingView.srlWan.setRefreshing(false);
                 }
-
                 if (homeListBean != null) {
-                    if (viewModel.getPage() == 0) {
-                        showContentView();
-                        mAdapter.clear();
-                        mAdapter.notifyDataSetChanged();
-                    }
-                    int positionStart = mAdapter.getItemCount() + 1;
-                    mAdapter.addAll(homeListBean.getData().getDatas());
-                    mAdapter.notifyItemRangeInserted(positionStart, homeListBean.getData().getDatas().size());
-                    bindingView.xrvWan.refreshComplete();
-
-                    if (mIsFirst) {
-                        mIsFirst = false;
+                    if (homeListBean.getData() != null && homeListBean.getData().getDatas() != null && homeListBean.getData().getDatas().size() > 0) {
+                        if (viewModel.getPage() == 0) {
+                            showContentView();
+                            mAdapter.setNewData(homeListBean.getData().getDatas());
+                        } else {
+                            mAdapter.addData(homeListBean.getData().getDatas());
+                            bindingView.xrvWan.loadMoreComplete();
+                        }
+                    } else {
+                        if (viewModel.getPage() == 0) {
+                            showEmptyView("你还没有收藏文章哦~");
+                        } else {
+                            bindingView.xrvWan.loadMoreEnd();
+                        }
                     }
                 } else {
-                    if (viewModel.getPage() == 0) {
-                        showError();
-                    } else {
-                        bindingView.xrvWan.noMoreLoading();
-                    }
+                    showError();
                 }
             }
         });

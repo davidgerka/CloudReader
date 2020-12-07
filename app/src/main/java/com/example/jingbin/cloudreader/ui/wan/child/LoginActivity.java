@@ -6,8 +6,10 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.example.jingbin.cloudreader.R;
-import com.example.jingbin.cloudreader.base.BaseActivity;
+import me.jingbin.bymvvm.base.BaseActivity;
 import com.example.jingbin.cloudreader.databinding.ActivityLoginBinding;
+import me.jingbin.bymvvm.rxbus.RxBus;
+import com.example.jingbin.cloudreader.app.RxCodeConstants;
 import com.example.jingbin.cloudreader.viewmodel.menu.LoginViewModel;
 
 /**
@@ -39,6 +41,7 @@ public class LoginActivity extends BaseActivity<LoginViewModel, ActivityLoginBin
      */
     public void loadSuccess(Boolean aBoolean) {
         if (aBoolean != null && aBoolean) {
+            RxBus.getDefault().post(RxCodeConstants.LOGIN, true);
             finish();
         }
     }

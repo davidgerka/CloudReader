@@ -1,28 +1,50 @@
 package com.example.jingbin.cloudreader.utils;
 
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.example.jingbin.cloudreader.R;
-import com.example.jingbin.cloudreader.view.MyDividerItemDecoration;
-import com.example.xrecyclerview.XRecyclerView;
+import com.example.jingbin.cloudreader.view.byview.NeteaseLoadMoreView;
+import com.example.jingbin.cloudreader.view.byview.NeteaseRefreshHeaderView;
+
+import me.jingbin.library.ByRecyclerView;
+import me.jingbin.library.decoration.GridSpaceItemDecoration;
+import me.jingbin.library.decoration.SpacesItemDecoration;
 
 /**
  * @author jingbin
- * @data 2019/1/20
- * @description
+ * @data 2019/11/7
  */
-
 public class RefreshHelper {
 
-    public static void init(XRecyclerView recyclerView) {
+    public static void initStaggeredGrid(ByRecyclerView recyclerView, int spanCount, int spacing) {
+        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL));
+        // 如果每个item高度一致设置后效率更高
+        recyclerView.setHasFixedSize(true);
+//        recyclerView.setItemAnimator(null);
+        recyclerView.addItemDecoration(new GridSpaceItemDecoration(spacing));
+        recyclerView.setRefreshHeaderView(new NeteaseRefreshHeaderView(recyclerView.getContext()));
+        recyclerView.setLoadingMoreView(new NeteaseLoadMoreView(recyclerView.getContext()));
+    }
+
+    public static ByRecyclerView initLinear(ByRecyclerView recyclerView, boolean isDivider) {
+        return initLinear(recyclerView, isDivider, 0);
+    }
+
+    public static ByRecyclerView initLinear(ByRecyclerView recyclerView, boolean isDivider, int headerNoShowSize) {
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-        recyclerView.setPullRefreshEnabled(false);
-        recyclerView.clearHeader();
-        recyclerView.setItemAnimator(null);
-        MyDividerItemDecoration itemDecoration = new MyDividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL, false);
-        itemDecoration.setDrawable(ContextCompat.getDrawable(recyclerView.getContext(), R.drawable.shape_line));
-        recyclerView.addItemDecoration(itemDecoration);
+//        recyclerView.setItemAnimator(null);
+        if (isDivider) {
+            recyclerView.addItemDecoration(new SpacesItemDecoration(recyclerView.getContext(), SpacesItemDecoration.VERTICAL, headerNoShowSize).setDrawable(R.drawable.shape_line));
+        }
+        recyclerView.setRefreshHeaderView(new NeteaseRefreshHeaderView(recyclerView.getContext()));
+        recyclerView.setLoadingMoreView(new NeteaseLoadMoreView(recyclerView.getContext()));
+        return recyclerView;
+    }
+
+    public static ByRecyclerView setDefaultAnimator(ByRecyclerView recyclerView) {
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        return recyclerView;
     }
 }

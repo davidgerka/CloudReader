@@ -1,10 +1,11 @@
 package com.example.jingbin.cloudreader.bean.wanandroid;
 
-import android.databinding.BaseObservable;
-import android.databinding.Bindable;
+import androidx.databinding.BaseObservable;
+import androidx.databinding.Bindable;
 
 import com.example.jingbin.cloudreader.BR;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -13,8 +14,9 @@ import java.util.List;
  * @description
  */
 
-public class TreeBean extends BaseObservable {
+public class TreeBean extends BaseObservable implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private int errorCode;
     private String errorMsg;
     private List<TreeItemBean> data;

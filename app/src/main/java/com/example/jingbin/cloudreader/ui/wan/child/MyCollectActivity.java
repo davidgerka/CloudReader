@@ -3,13 +3,13 @@ package com.example.jingbin.cloudreader.ui.wan.child;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 
 import com.example.jingbin.cloudreader.R;
-import com.example.jingbin.cloudreader.base.BaseActivity;
+import me.jingbin.bymvvm.base.BaseActivity;
 import com.example.jingbin.cloudreader.databinding.ActivityMyCollectBinding;
 import com.example.jingbin.cloudreader.view.MyFragmentPagerAdapter;
-import com.example.jingbin.cloudreader.viewmodel.menu.NoViewModel;
+import me.jingbin.bymvvm.base.NoViewModel;
 
 import java.util.ArrayList;
 
@@ -20,8 +20,8 @@ import java.util.ArrayList;
  */
 public class MyCollectActivity extends BaseActivity<NoViewModel, ActivityMyCollectBinding> {
 
-    private ArrayList<String> mTitleList = new ArrayList<>(4);
-    private ArrayList<Fragment> mFragments = new ArrayList<>(4);
+    private ArrayList<String> mTitleList = new ArrayList<>(3);
+    private ArrayList<Fragment> mFragments = new ArrayList<>(3);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

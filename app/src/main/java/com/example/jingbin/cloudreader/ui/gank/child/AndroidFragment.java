@@ -2,21 +2,23 @@ package com.example.jingbin.cloudreader.ui.gank.child;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.LinearLayoutManager;
+import androidx.annotation.Nullable;
 
-import com.example.jingbin.cloudreader.MainActivity;
 import com.example.jingbin.cloudreader.R;
 import com.example.jingbin.cloudreader.adapter.GankAndroidAdapter;
-import com.example.jingbin.cloudreader.base.BaseFragment;
+import me.jingbin.bymvvm.base.BaseFragment;
 import com.example.jingbin.cloudreader.databinding.FragmentAndroidBinding;
-import com.example.jingbin.cloudreader.viewmodel.gank.BigAndroidViewModel;
-import com.example.xrecyclerview.XRecyclerView;
+import com.example.jingbin.cloudreader.ui.MainActivity;
+import com.example.jingbin.cloudreader.utils.RefreshHelper;
+import com.example.jingbin.cloudreader.viewmodel.gank.GankViewModel;
+
+import me.jingbin.library.ByRecyclerView;
+import me.jingbin.library.decoration.SpacesItemDecoration;
 
 /**
  * 大安卓 fragment
  */
-public class AndroidFragment extends BaseFragment<BigAndroidViewModel, FragmentAndroidBinding> {
+public class AndroidFragment extends BaseFragment<GankViewModel, FragmentAndroidBinding> {
 
     private static final String TAG = "AndroidFragment";
     private static final String TYPE = "mType";
@@ -69,20 +71,26 @@ public class AndroidFragment extends BaseFragment<BigAndroidViewModel, FragmentA
         if (!mIsPrepared || !mIsVisible || !mIsFirst) {
             return;
         }
+        showLoading();
         loadAndroidData();
+        mIsFirst = false;
     }
 
     private void initRecyclerView() {
         adapter = new GankAndroidAdapter();
-        bindingView.xrvAndroid.setItemAnimator(null);
-        bindingView.xrvAndroid.setLayoutManager(new LinearLayoutManager(activity));
-        bindingView.xrvAndroid.setLoadingListener(new XRecyclerView.LoadingListener() {
+        // 加了分割线，滚动条才会置顶
+        SpacesItemDecoration itemDecoration = new SpacesItemDecoration(activity, SpacesItemDecoration.VERTICAL, 1);
+        itemDecoration.setDrawable(R.drawable.shape_transparent);
+        RefreshHelper.initLinear(bindingView.xrvAndroid, false).addItemDecoration(itemDecoration);
+        bindingView.xrvAndroid.setAdapter(adapter);
+        bindingView.xrvAndroid.setOnRefreshListener(new ByRecyclerView.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 viewModel.setPage(1);
                 loadAndroidData();
             }
-
+        });
+        bindingView.xrvAndroid.setOnLoadMoreListener(new ByRecyclerView.OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
                 int page = viewModel.getPage();
@@ -91,31 +99,23 @@ public class AndroidFragment extends BaseFragment<BigAndroidViewModel, FragmentA
                 loadAndroidData();
             }
         });
-        bindingView.xrvAndroid.setAdapter(adapter);
     }
 
     private void loadAndroidData() {
-        viewModel.loadAndroidData().observe(this, bean -> {
+        viewModel.loadGankData().observe(this, bean -> {
             if (bean != null && bean.getResults() != null && bean.getResults().size() > 0) {
                 if (viewModel.getPage() == 1) {
                     showContentView();
-                    adapter.clear();
-                    adapter.notifyDataSetChanged();
+                    adapter.setNewData(bean.getResults());
+                } else {
+                    adapter.addData(bean.getResults());
                 }
-                int positionStart = adapter.getItemCount() + 1;
-                adapter.addAll(bean.getResults());
-                adapter.notifyItemRangeInserted(positionStart, bean.getResults().size());
-                bindingView.xrvAndroid.refreshComplete();
-                if (mIsFirst) {
-                    mIsFirst = false;
-                }
+                bindingView.xrvAndroid.loadMoreComplete();
             } else {
-                bindingView.xrvAndroid.refreshComplete();
-                // 注意：这里不能写成 mPage == 1，否则会一直显示错误页面
-                if (adapter.getItemCount() == 0) {
+                if (viewModel.getPage() == 1) {
                     showError();
                 } else {
-                    bindingView.xrvAndroid.noMoreLoading();
+                    bindingView.xrvAndroid.loadMoreEnd();
                 }
             }
         });

@@ -8,6 +8,7 @@ import com.example.jingbin.cloudreader.bean.FrontpageBean;
 import com.example.jingbin.cloudreader.bean.GankIoDayBean;
 import com.example.jingbin.cloudreader.http.HttpClient;
 import com.example.jingbin.cloudreader.http.RequestImpl;
+import com.example.jingbin.cloudreader.utils.DataUtil;
 import com.example.jingbin.cloudreader.utils.SPUtils;
 
 import java.util.ArrayList;
@@ -82,29 +83,33 @@ public class EverydayModel {
                 List<List<AndroidBean>> lists = new ArrayList<>();
                 GankIoDayBean.ResultsBean results = gankIoDayBean.getResults();
 
-                if (results.getAndroid() != null && results.getAndroid().size() > 0) {
-                    addUrlList(lists, results.getAndroid(), "Android");
+                List<AndroidBean> androidBeans = DataUtil.getTrueData(results.getAndroid());
+                if (androidBeans != null && androidBeans.size() > 0) {
+                    addUrlList(lists, androidBeans, "Android");
                 }
                 if (results.getWelfare() != null && results.getWelfare().size() > 0) {
                     addUrlList(lists, results.getWelfare(), "福利");
                 }
                 if (results.getiOS() != null && results.getiOS().size() > 0) {
-                    addUrlList(lists, results.getiOS(), "IOS");
+                    addUrlList(lists, results.getiOS(), "iOS");
                 }
                 if (results.getRestMovie() != null && results.getRestMovie().size() > 0) {
                     addUrlList(lists, results.getRestMovie(), "休息视频");
                 }
-                if (results.getResource() != null && results.getResource().size() > 0) {
-                    addUrlList(lists, results.getResource(), "拓展资源");
+                List<AndroidBean> resourceBeans = DataUtil.getTrueData(results.getResource());
+                if (resourceBeans != null && resourceBeans.size() > 0) {
+                    addUrlList(lists, resourceBeans, "拓展资源");
                 }
-                if (results.getRecommend() != null && results.getRecommend().size() > 0) {
-                    addUrlList(lists, results.getRecommend(), "瞎推荐");
+                List<AndroidBean> recommendBeans = DataUtil.getTrueData(results.getRecommend());
+                if (recommendBeans != null && recommendBeans.size() > 0) {
+                    addUrlList(lists, recommendBeans, "瞎推荐");
                 }
                 if (results.getFront() != null && results.getFront().size() > 0) {
                     addUrlList(lists, results.getFront(), "前端");
                 }
-                if (results.getApp() != null && results.getApp().size() > 0) {
-                    addUrlList(lists, results.getApp(), "App");
+                List<AndroidBean> appBean = DataUtil.getTrueData(results.getApp());
+                if (appBean != null && appBean.size() > 0) {
+                    addUrlList(lists, appBean, "App");
                 }
 
                 return Observable.just(lists);
@@ -146,7 +151,7 @@ public class EverydayModel {
     private void addUrlList(List<List<AndroidBean>> lists, List<AndroidBean> arrayList, String typeTitle) {
         // title
         AndroidBean bean = new AndroidBean();
-        bean.setType_title(typeTitle);
+        bean.settypeTitle(typeTitle);
         ArrayList<AndroidBean> androidBeen = new ArrayList<>();
         androidBeen.add(bean);
         lists.add(androidBeen);
@@ -184,13 +189,13 @@ public class EverydayModel {
         androidBean.setUrl(arrayList.get(i).getUrl());
         // 随机图的url
         if (i < 3) {
-            androidBean.setImage_url(ConstantsImageUrl.HOME_SIX_URLS[getRandom(3)]);//三小图
+            androidBean.setimageUrl(ConstantsImageUrl.HOME_SIX_URLS[getRandom(3)]);//三小图
         } else if (androidSize == 4) {
-            androidBean.setImage_url(ConstantsImageUrl.HOME_ONE_URLS[getRandom(1)]);//一图
+            androidBean.setimageUrl(ConstantsImageUrl.HOME_ONE_URLS[getRandom(1)]);//一图
         } else if (androidSize == 5) {
-            androidBean.setImage_url(ConstantsImageUrl.HOME_TWO_URLS[getRandom(2)]);//两图
+            androidBean.setimageUrl(ConstantsImageUrl.HOME_TWO_URLS[getRandom(2)]);//两图
         } else if (androidSize >= 6) {
-            androidBean.setImage_url(ConstantsImageUrl.HOME_SIX_URLS[getRandom(3)]);//三小图
+            androidBean.setimageUrl(ConstantsImageUrl.HOME_SIX_URLS[getRandom(3)]);//三小图
         }
         return androidBean;
     }
@@ -209,11 +214,11 @@ public class EverydayModel {
 //            DebugUtil.error("---androidSize:  " + androidSize);
             // 随机图的url
             if (androidSize == 1) {
-                androidBean.setImage_url(ConstantsImageUrl.HOME_ONE_URLS[getRandom(1)]);//一图
+                androidBean.setimageUrl(ConstantsImageUrl.HOME_ONE_URLS[getRandom(1)]);//一图
             } else if (androidSize == 2) {
-                androidBean.setImage_url(ConstantsImageUrl.HOME_TWO_URLS[getRandom(2)]);//两图
+                androidBean.setimageUrl(ConstantsImageUrl.HOME_TWO_URLS[getRandom(2)]);//两图
             } else if (androidSize == 3) {
-                androidBean.setImage_url(ConstantsImageUrl.HOME_SIX_URLS[getRandom(3)]);//三图
+                androidBean.setimageUrl(ConstantsImageUrl.HOME_SIX_URLS[getRandom(3)]);//三图
             }
             tempList.add(androidBean);
         }

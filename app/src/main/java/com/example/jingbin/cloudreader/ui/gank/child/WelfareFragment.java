@@ -1,22 +1,29 @@
 package com.example.jingbin.cloudreader.ui.gank.child;
 
-import android.arch.lifecycle.Observer;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.view.View;
+
+import androidx.annotation.Nullable;
+import androidx.lifecycle.Observer;
 
 import com.example.jingbin.cloudreader.R;
-import com.example.jingbin.cloudreader.adapter.WelfareAdapter;
-import com.example.jingbin.cloudreader.base.BaseFragment;
+
+import me.jingbin.bymvvm.base.BaseFragment;
+
 import com.example.jingbin.cloudreader.bean.GankIoDataBean;
 import com.example.jingbin.cloudreader.databinding.FragmentWelfareBinding;
-import com.example.jingbin.cloudreader.utils.DebugUtil;
+import com.example.jingbin.cloudreader.databinding.ItemWelfareBinding;
+import com.example.jingbin.cloudreader.utils.DensityUtil;
+import com.example.jingbin.cloudreader.utils.RefreshHelper;
 import com.example.jingbin.cloudreader.view.viewbigimage.ViewBigImageActivity;
 import com.example.jingbin.cloudreader.viewmodel.gank.WelfareViewModel;
-import com.example.xrecyclerview.XRecyclerView;
 
 import java.util.ArrayList;
-import java.util.List;
+
+import me.jingbin.bymvvm.adapter.BaseBindingAdapter;
+import me.jingbin.bymvvm.adapter.BaseBindingHolder;
+import me.jingbin.library.ByRecyclerView;
+import me.jingbin.library.view.OnItemFilterClickListener;
 
 /**
  * 福利
@@ -26,11 +33,11 @@ import java.util.List;
 public class WelfareFragment extends BaseFragment<WelfareViewModel, FragmentWelfareBinding> {
 
     private static final String TAG = "WelfareFragment";
-    private WelfareAdapter mWelfareAdapter;
     private boolean isPrepared = false;
     private boolean isFirst = true;
     private ArrayList<String> imgList = new ArrayList<>();
     private ArrayList<String> imgTitleList = new ArrayList<>();
+    private BaseBindingAdapter<GankIoDataBean.ResultBean, ItemWelfareBinding> mWelfareAdapter;
 
     @Override
     public int setContent() {
@@ -45,30 +52,28 @@ public class WelfareFragment extends BaseFragment<WelfareViewModel, FragmentWelf
         isPrepared = true;
     }
 
-
     @Override
     protected void loadData() {
         if (!mIsVisible || !isPrepared || !isFirst) {
             return;
         }
+        showLoading();
         loadWelfareData();
+        isFirst = false;
     }
 
     private void initRecycleView() {
-        bindingView.xrvWelfare.setPullRefreshEnabled(false);
-        bindingView.xrvWelfare.clearHeader();
-        mWelfareAdapter = new WelfareAdapter();
-        //构造器中，第一个参数表示列数或者行数，第二个参数表示滑动方向,瀑布流
-        bindingView.xrvWelfare.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
-        bindingView.xrvWelfare.setHasFixedSize(true);
-        bindingView.xrvWelfare.setItemAnimator(null);
-        bindingView.xrvWelfare.setAdapter(mWelfareAdapter);
-        bindingView.xrvWelfare.setLoadingListener(new XRecyclerView.LoadingListener() {
+        int width = (DensityUtil.getDisplayWidth() - 36) / 2;
+        mWelfareAdapter = new BaseBindingAdapter<GankIoDataBean.ResultBean, ItemWelfareBinding>(R.layout.item_welfare) {
             @Override
-            public void onRefresh() {
-
+            protected void bindView(BaseBindingHolder holder, GankIoDataBean.ResultBean bean, ItemWelfareBinding binding, int position) {
+                DensityUtil.setWidthHeight(binding.ivWelfare, width, 852 / 1280f);
+                binding.setBean(bean);
             }
-
+        };
+        RefreshHelper.initStaggeredGrid(bindingView.xrvWelfare, 2, 12);
+        bindingView.xrvWelfare.setAdapter(mWelfareAdapter);
+        bindingView.xrvWelfare.setOnLoadMoreListener(new ByRecyclerView.OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
                 int page = viewModel.getPage();
@@ -76,11 +81,14 @@ public class WelfareFragment extends BaseFragment<WelfareViewModel, FragmentWelf
                 viewModel.setPage(page);
                 loadWelfareData();
             }
+        }, 300);
+        bindingView.xrvWelfare.setOnItemClickListener(new OnItemFilterClickListener() {
+            @Override
+            public void onSingleClick(View v, int position) {
+                ViewBigImageActivity.startImageList(getContext(), position, imgList, imgTitleList);
+            }
         });
-        mWelfareAdapter.setOnItemClickListener((resultsBean, position) -> {
-            ViewBigImageActivity.startImageList(getContext(), position, imgList, imgTitleList);
-        });
-        viewModel.getImageAndTitle().observe(this, new Observer<ArrayList<ArrayList<String>>>() {
+        viewModel.getImageAndTitle().observe(getViewLifecycleOwner(), new Observer<ArrayList<ArrayList<String>>>() {
             @Override
             public void onChanged(@Nullable ArrayList<ArrayList<String>> arrayLists) {
                 if (arrayLists != null && arrayLists.size() == 2) {
@@ -100,22 +108,17 @@ public class WelfareFragment extends BaseFragment<WelfareViewModel, FragmentWelf
                     if (viewModel.getPage() == 1) {
                         showContentView();
                         mWelfareAdapter.clear();
+                        mWelfareAdapter.setNewData(bean.getResults());
+                    } else {
+                        mWelfareAdapter.addData(bean.getResults());
                     }
-                    int positionStart = mWelfareAdapter.getItemCount() + 1;
-                    mWelfareAdapter.addAll(bean.getResults());
-                    // 去掉传统的 notifyDataSetChanged()
-                    mWelfareAdapter.notifyItemRangeInserted(positionStart, bean.getResults().size());
-                    bindingView.xrvWelfare.refreshComplete();
-
-                    if (isFirst) {
-                        isFirst = false;
-                    }
+                    bindingView.xrvWelfare.loadMoreComplete();
                 } else {
-                    bindingView.xrvWelfare.refreshComplete();
+                    bindingView.xrvWelfare.loadMoreComplete();
                     if (mWelfareAdapter.getItemCount() == 0) {
                         showError();
                     } else {
-                        bindingView.xrvWelfare.noMoreLoading();
+                        bindingView.xrvWelfare.loadMoreEnd();
                     }
                 }
             }

@@ -1,20 +1,18 @@
 package com.example.jingbin.cloudreader.ui.wan.child;
 
-import android.arch.lifecycle.Observer;
+import androidx.lifecycle.Observer;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.LinearLayoutManager;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
 
 import com.example.jingbin.cloudreader.R;
 import com.example.jingbin.cloudreader.adapter.CollectUrlAdapter;
-import com.example.jingbin.cloudreader.base.BaseFragment;
+import me.jingbin.bymvvm.base.BaseFragment;
 import com.example.jingbin.cloudreader.bean.CollectUrlBean;
 import com.example.jingbin.cloudreader.databinding.FragmentWanAndroidBinding;
 import com.example.jingbin.cloudreader.utils.CommonUtils;
 import com.example.jingbin.cloudreader.utils.RefreshHelper;
-import com.example.jingbin.cloudreader.utils.ToastUtil;
 import com.example.jingbin.cloudreader.viewmodel.wan.CollectLinkModel;
 
 /**
@@ -62,7 +60,8 @@ public class CollectLinkFragment extends BaseFragment<CollectLinkModel, Fragment
 
     private void initRefreshView() {
         bindingView.srlWan.setColorSchemeColors(CommonUtils.getColor(R.color.colorTheme));
-        RefreshHelper.init(bindingView.xrvWan);
+        RefreshHelper.initLinear(bindingView.xrvWan, true);
+        RefreshHelper.setDefaultAnimator(bindingView.xrvWan).setLoadMoreEnabled(true);
         mAdapter = new CollectUrlAdapter(activity);
         bindingView.xrvWan.setAdapter(mAdapter);
         bindingView.srlWan.setOnRefreshListener(() -> bindingView.srlWan.postDelayed(this::getCollectUrlList, 300));
@@ -82,21 +81,24 @@ public class CollectLinkFragment extends BaseFragment<CollectLinkModel, Fragment
         viewModel.getCollectUrlList().observe(this, new Observer<CollectUrlBean>() {
             @Override
             public void onChanged(@Nullable CollectUrlBean bean) {
-                showContentView();
                 if (bindingView.srlWan.isRefreshing()) {
                     bindingView.srlWan.setRefreshing(false);
                 }
-                if (bean != null && bean.getData() != null && bean.getData().size() > 0) {
-                    mAdapter.clear();
-                    mAdapter.addAll(bean.getData());
-                    mAdapter.notifyDataSetChanged();
-                    bindingView.xrvWan.refreshComplete();
-                    bindingView.xrvWan.noMoreLoading();
-
-                    mIsFirst = false;
+                if (bean != null) {
+                    if (bean.getData() != null && bean.getData() != null && bean.getData().size() > 0) {
+                        showContentView();
+                        mAdapter.clear();
+                        mAdapter.addAll(bean.getData());
+                        mAdapter.notifyDataSetChanged();
+                        bindingView.xrvWan.loadMoreEnd();
+                    } else {
+                        showEmptyView("你还没有收藏网址哦~");
+                    }
+                    if (mIsFirst) {
+                        mIsFirst = false;
+                    }
                 } else {
-                    bindingView.xrvWan.refreshComplete();
-                    ToastUtil.showToastLong("还没有收藏网址哦~");
+                    showError();
                 }
             }
         });

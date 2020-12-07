@@ -1,22 +1,22 @@
 package com.example.jingbin.cloudreader.ui.wan.child;
 
-import android.arch.lifecycle.Observer;
+import androidx.lifecycle.Observer;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.example.jingbin.cloudreader.R;
 import com.example.jingbin.cloudreader.adapter.CategoryArticleAdapter;
-import com.example.jingbin.cloudreader.base.BaseFragment;
+import me.jingbin.bymvvm.base.BaseFragment;
 import com.example.jingbin.cloudreader.bean.wanandroid.HomeListBean;
 import com.example.jingbin.cloudreader.databinding.FragmentCategoryArticleBinding;
-import com.example.jingbin.cloudreader.view.MyDividerItemDecoration;
+import com.example.jingbin.cloudreader.view.byview.NeteaseLoadMoreView;
 import com.example.jingbin.cloudreader.viewmodel.wan.WanAndroidListViewModel;
+
+import me.jingbin.library.ByRecyclerView;
+import me.jingbin.library.decoration.SpacesItemDecoration;
 
 /**
  * @author jingbin
@@ -26,9 +26,15 @@ import com.example.jingbin.cloudreader.viewmodel.wan.WanAndroidListViewModel;
 public class CategoryArticleFragment extends BaseFragment<WanAndroidListViewModel, FragmentCategoryArticleBinding> {
 
     private static final String ID = "categoryId";
+    private static final String NAME = "categoryName";
+    private static final String IS_LOAD = "isLoad";
     private int categoryId;
+    private String categoryName;
+    private boolean isLoad;
     private FragmentActivity activity;
     private CategoryArticleAdapter mAdapter;
+    private boolean mIsFirst = true;
+    private boolean mIsPrepared;
 
     @Override
     public int setContent() {
@@ -41,10 +47,12 @@ public class CategoryArticleFragment extends BaseFragment<WanAndroidListViewMode
         activity = getActivity();
     }
 
-    public static CategoryArticleFragment newInstance(int categoryId) {
+    public static CategoryArticleFragment newInstance(int categoryId, String categoryName, boolean isLoad) {
         CategoryArticleFragment fragment = new CategoryArticleFragment();
         Bundle args = new Bundle();
         args.putInt(ID, categoryId);
+        args.putString(NAME, categoryName);
+        args.putBoolean(IS_LOAD, isLoad);
         fragment.setArguments(args);
         return fragment;
     }
@@ -54,6 +62,8 @@ public class CategoryArticleFragment extends BaseFragment<WanAndroidListViewMode
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             categoryId = getArguments().getInt(ID);
+            categoryName = getArguments().getString(NAME);
+            isLoad = getArguments().getBoolean(IS_LOAD);
         }
     }
 
@@ -63,50 +73,70 @@ public class CategoryArticleFragment extends BaseFragment<WanAndroidListViewMode
 
         initRefreshView();
         viewModel.setPage(0);
-        bindingView.recyclerView.postDelayed(this::getHomeList, 100);
+        mIsPrepared = true;
+        if (isLoad) {
+            // 第一次进来加载
+            showLoading();
+            getHomeList();
+            mIsFirst = false;
+        } else {
+            // 点击到不被复用的fragment时加载
+            loadData();
+        }
+    }
+
+    @Override
+    protected void loadData() {
+        if (!mIsPrepared || !mIsVisible || !mIsFirst) {
+            return;
+        }
+        showLoading();
+        getHomeList();
+        mIsFirst = false;
     }
 
     private void initRefreshView() {
         bindingView.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
         bindingView.recyclerView.setItemAnimator(null);
         mAdapter = new CategoryArticleAdapter(activity);
-        mAdapter.bindToRecyclerView(bindingView.recyclerView, true);
-        MyDividerItemDecoration itemDecoration = new MyDividerItemDecoration(bindingView.recyclerView.getContext(), DividerItemDecoration.VERTICAL, false);
-        itemDecoration.setDrawable(ContextCompat.getDrawable(bindingView.recyclerView.getContext(), R.drawable.shape_line));
-        bindingView.recyclerView.addItemDecoration(itemDecoration);
+        bindingView.recyclerView.addItemDecoration(new SpacesItemDecoration(activity, SpacesItemDecoration.VERTICAL));
+        bindingView.recyclerView.setLoadingMoreView(new NeteaseLoadMoreView(activity));
+        bindingView.recyclerView.setAdapter(mAdapter);
 
-        mAdapter.setOnLoadMoreListener(new BaseQuickAdapter.RequestLoadMoreListener() {
+        bindingView.recyclerView.setOnLoadMoreListener(new ByRecyclerView.OnLoadMoreListener() {
             @Override
-            public void onLoadMoreRequested() {
+            public void onLoadMore() {
                 int page = viewModel.getPage();
                 viewModel.setPage(++page);
                 getHomeList();
             }
-        }, bindingView.recyclerView);
+        });
     }
 
     private void getHomeList() {
-        viewModel.getHomeList(categoryId).observe(this, new Observer<HomeListBean>() {
+        viewModel.getHomeArticleList(categoryId).observe(this, new Observer<HomeListBean>() {
             @Override
             public void onChanged(@Nullable HomeListBean homeListBean) {
-                showContentView();
                 if (homeListBean != null
                         && homeListBean.getData() != null
                         && homeListBean.getData().getDatas() != null
                         && homeListBean.getData().getDatas().size() > 0) {
+                    showContentView();
                     if (viewModel.getPage() == 0) {
-                        mAdapter.getData().clear();
-                        mAdapter.notifyDataSetChanged();
+                        mAdapter.setNewData(homeListBean.getData().getDatas());
+                    } else {
+                        mAdapter.addData(homeListBean.getData().getDatas());
                     }
-                    int positionStart = mAdapter.getItemCount() + 1;
-                    mAdapter.addData(homeListBean.getData().getDatas());
-                    mAdapter.notifyItemRangeInserted(positionStart, homeListBean.getData().getDatas().size());
-                    mAdapter.loadMoreComplete();
+                    bindingView.recyclerView.loadMoreComplete();
                 } else {
                     if (viewModel.getPage() == 0) {
-                        showError();
+                        if (homeListBean != null) {
+                            showEmptyView(String.format("未找到与\"%s\"相关的内容", categoryName));
+                        } else {
+                            showError();
+                        }
                     } else {
-                        mAdapter.loadMoreEnd();
+                        bindingView.recyclerView.loadMoreEnd();
                     }
                 }
             }
@@ -122,6 +152,13 @@ public class CategoryArticleFragment extends BaseFragment<WanAndroidListViewMode
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mIsFirst = true;
+        mIsPrepared = false;
         viewModel.setPage(0);
+        if (mAdapter != null) {
+            mAdapter.getData().clear();
+            mAdapter = null;
+        }
+        bindingView.recyclerView.destroy();
     }
 }

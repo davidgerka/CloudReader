@@ -1,27 +1,31 @@
 package com.example.jingbin.cloudreader.ui.wan.child;
 
-import android.arch.lifecycle.Observer;
+import androidx.lifecycle.Observer;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.widget.SwipeRefreshLayout;
+import androidx.annotation.Nullable;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import android.view.View;
 
 import com.example.jingbin.cloudreader.R;
 import com.example.jingbin.cloudreader.adapter.JokeAdapter;
-import com.example.jingbin.cloudreader.base.BaseFragment;
+import me.jingbin.bymvvm.base.BaseFragment;
 import com.example.jingbin.cloudreader.bean.wanandroid.DuanZiBean;
 import com.example.jingbin.cloudreader.databinding.FragmentWanAndroidBinding;
 import com.example.jingbin.cloudreader.utils.CommonUtils;
+import com.example.jingbin.cloudreader.utils.DialogBuild;
 import com.example.jingbin.cloudreader.utils.RefreshHelper;
 import com.example.jingbin.cloudreader.viewmodel.wan.JokeViewModel;
-import com.example.xrecyclerview.XRecyclerView;
 
 import java.util.List;
 import java.util.Random;
 
+import me.jingbin.library.ByRecyclerView;
+
 /**
  * @author jingbin
- *         Updated by jingbin on 18/12/23.
+ * Updated by jingbin on 18/12/23.
  */
 public class JokeFragment extends BaseFragment<JokeViewModel, FragmentWanAndroidBinding> {
 
@@ -68,7 +72,7 @@ public class JokeFragment extends BaseFragment<JokeViewModel, FragmentWanAndroid
     }
 
     private void initRefreshView() {
-        RefreshHelper.init(bindingView.xrvWan);
+        RefreshHelper.initLinear(bindingView.xrvWan, true).setItemAnimator(new DefaultItemAnimator());
         bindingView.srlWan.setColorSchemeColors(CommonUtils.getColor(R.color.colorTheme));
         mAdapter = new JokeAdapter();
         bindingView.xrvWan.setAdapter(mAdapter);
@@ -77,7 +81,6 @@ public class JokeFragment extends BaseFragment<JokeViewModel, FragmentWanAndroid
             @Override
             public void onRefresh() {
                 bindingView.srlWan.postDelayed(() -> {
-                    bindingView.xrvWan.reset();
                     viewModel.setRefreshBK(true);
                     viewModel.setPage(new Random().nextInt(100));
                     viewModel.showQSBKList();
@@ -85,18 +88,20 @@ public class JokeFragment extends BaseFragment<JokeViewModel, FragmentWanAndroid
                 }, 100);
             }
         });
-        bindingView.xrvWan.setLoadingListener(new XRecyclerView.LoadingListener() {
-            @Override
-            public void onRefresh() {
-
-            }
-
+        bindingView.xrvWan.setOnLoadMoreListener(new ByRecyclerView.OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
                 int page = viewModel.getPage();
                 viewModel.setPage(++page);
                 viewModel.setRefreshBK(false);
                 viewModel.showQSBKList();
+            }
+        });
+        bindingView.xrvWan.setOnItemLongClickListener(new ByRecyclerView.OnItemLongClickListener() {
+            @Override
+            public boolean onLongClick(View v, int position) {
+                DialogBuild.showItems(v, mAdapter.getItemData(position).getContent());
+                return false;
             }
         });
         viewModel.getData().observe(this, new Observer<List<DuanZiBean>>() {
@@ -108,23 +113,16 @@ public class JokeFragment extends BaseFragment<JokeViewModel, FragmentWanAndroid
                 }
                 if (duanZiBeans != null && duanZiBeans.size() > 0) {
                     if (viewModel.isRefreshBK()) {
-                        mAdapter.clear();
-                        mAdapter.notifyDataSetChanged();
+                        mAdapter.setNewData(duanZiBeans);
+                    } else {
+                        mAdapter.addData(duanZiBeans);
+                        bindingView.xrvWan.loadMoreComplete();
                     }
-                    int positionStart = mAdapter.getItemCount() + 1;
-                    mAdapter.addAll(duanZiBeans);
-                    mAdapter.notifyItemRangeInserted(positionStart, duanZiBeans.size());
-                    bindingView.xrvWan.refreshComplete();
-
-                    if (mIsFirst) {
-                        mIsFirst = false;
-                    }
-
                 } else {
-                    if (viewModel.isRefreshBK()) {
+                    if (!viewModel.isRefreshBK()) {
                         showError();
                     } else {
-                        bindingView.xrvWan.refreshComplete();
+                        bindingView.xrvWan.loadMoreComplete();
                     }
                 }
             }
@@ -136,9 +134,10 @@ public class JokeFragment extends BaseFragment<JokeViewModel, FragmentWanAndroid
         if (!mIsPrepared || !mIsVisible || !mIsFirst) {
             return;
         }
-
+        showLoading();
         bindingView.srlWan.setRefreshing(true);
         bindingView.srlWan.postDelayed(() -> viewModel.showQSBKList(), 100);
+        mIsFirst = false;
     }
 
     @Override

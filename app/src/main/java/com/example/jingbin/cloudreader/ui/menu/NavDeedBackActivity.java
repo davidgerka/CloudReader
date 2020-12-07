@@ -2,24 +2,19 @@ package com.example.jingbin.cloudreader.ui.menu;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
 
 import com.example.jingbin.cloudreader.R;
-import com.example.jingbin.cloudreader.base.BaseActivity;
+import me.jingbin.bymvvm.base.BaseActivity;
 import com.example.jingbin.cloudreader.databinding.ActivityNavDeedBackBinding;
 import com.example.jingbin.cloudreader.utils.BaseTools;
 import com.example.jingbin.cloudreader.utils.CommonUtils;
 import com.example.jingbin.cloudreader.utils.PerfectClickListener;
 import com.example.jingbin.cloudreader.utils.ToastUtil;
-import com.example.jingbin.cloudreader.view.webview.WebViewActivity;
-import com.example.jingbin.cloudreader.viewmodel.menu.NoViewModel;
-
-import java.util.List;
+import com.example.jingbin.cloudreader.ui.WebViewActivity;
+import me.jingbin.bymvvm.base.NoViewModel;
 
 /**
  * @author jingbin
@@ -38,6 +33,8 @@ public class NavDeedBackActivity extends BaseActivity<NoViewModel, ActivityNavDe
         bindingView.tvQq.setOnClickListener(listener);
         bindingView.tvEmail.setOnClickListener(listener);
         bindingView.tvFaq.setOnClickListener(listener);
+        bindingView.tvQqGroup.setOnClickListener(listener);
+        bindingView.tvQqGroupNum.setOnClickListener(listener);
     }
 
     private PerfectClickListener listener = new PerfectClickListener() {
@@ -48,12 +45,10 @@ public class NavDeedBackActivity extends BaseActivity<NoViewModel, ActivityNavDe
                     WebViewActivity.loadUrl(v.getContext(), CommonUtils.getString(R.string.string_url_issues), "Issues");
                     break;
                 case R.id.tv_qq:
-                    if (BaseTools.isApplicationAvilible(NavDeedBackActivity.this, "com.tencent.mobileqq")) {
-                        String url = "mqqwpa://im/chat?chat_type=wpa&uin=770413277";
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                    } else {
-                        ToastUtil.showToastLong("先安装一个QQ吧..");
-                    }
+                    BaseTools.joinQQChat(NavDeedBackActivity.this, "770413277");
+                    break;
+                case R.id.tv_qq_group:
+                    BaseTools.joinQQGroup(NavDeedBackActivity.this, "jSdY9xxzZ7xXG55_V8OUb8ds_YT6JjAn");
                     break;
                 case R.id.tv_email:
                     try {
@@ -70,7 +65,9 @@ public class NavDeedBackActivity extends BaseActivity<NoViewModel, ActivityNavDe
                 case R.id.tv_faq:
                     WebViewActivity.loadUrl(v.getContext(), CommonUtils.getString(R.string.string_url_faq), "常见问题归纳");
                     break;
-
+                case R.id.tv_qq_group_num:
+                    BaseTools.copy(bindingView.tvQqGroupNum.getText().toString());
+                    break;
                 default:
                     break;
             }
